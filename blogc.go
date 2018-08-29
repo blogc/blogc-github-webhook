@@ -21,9 +21,13 @@ func blogcRun(tempDir string, baseDir string, p *Payload) error {
 		return fmt.Errorf("blogc: Invalid Full Name")
 	}
 
-	outputDir := filepath.Join(baseDir, "builds", fmt.Sprintf("%s-%d", p.After, time.Now().Unix()))
+	buildId := fmt.Sprintf("%s-%d", p.After, time.Now().Unix())
+
+	outputDir := filepath.Join(baseDir, "builds", buildId)
+	outputDirRelative := filepath.Join("..", "..", "builds", buildId)
 	if _, err := os.Stat(outputDir); err == nil {
 		outputDir += "-"
+		outputDirRelative += "-"
 	}
 
 	cmd := exec.Command("blogc-make", "-f", blogcfile)
@@ -48,8 +52,8 @@ func blogcRun(tempDir string, baseDir string, p *Payload) error {
 		os.MkdirAll(symDir, 0777)
 	}
 
-	log.Printf("blogc: Creating symlink %s -> %s", sym, outputDir)
-	if err := os.Symlink(outputDir, sym); err != nil {
+	log.Printf("blogc: Creating symlink %s -> %s", sym, outputDirRelative)
+	if err := os.Symlink(outputDirRelative, sym); err != nil {
 		return err
 	}
 
