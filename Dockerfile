@@ -9,7 +9,7 @@ RUN apk add --no-cache --virtual .build-deps \
         make \
         gcc \
         musl-dev \
-    && apk --no-cache add \
+    && apk add --no-cache \
         bash \
         git \
     && wget https://github.com/blogc/blogc/releases/download/v$BLOGC_VERSION/blogc-$BLOGC_VERSION.tar.bz2 \
@@ -31,6 +31,8 @@ RUN apk add --no-cache --virtual .build-deps \
         && go build -o /usr/bin/blogc-github-webhook \
     ) \
     && rm -rf /code
+
+ENV BGW_BASEDIR /data
 
 VOLUME ["/data"]
 EXPOSE 8000

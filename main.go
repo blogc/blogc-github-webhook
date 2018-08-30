@@ -15,7 +15,7 @@ func main() {
 
 	baseDir, found := os.LookupEnv("BGW_BASEDIR")
 	if !found {
-		baseDir = "/data" // this is for docker
+		baseDir = "/var/blogc-github-webhook"
 	}
 
 	listenAddr, found := os.LookupEnv("BGW_LISTEN_ADDR")
