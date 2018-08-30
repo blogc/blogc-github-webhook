@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 )
 
@@ -24,6 +25,7 @@ func gitClone(apiKey string, r *Repository) (string, error) {
 	out, err := cmd.CombinedOutput()
 	log.Printf("git: Cloning repository: %s\n%s", r.FullName, string(out))
 	if err != nil {
+		os.RemoveAll(dir)
 		return "", err
 	}
 
