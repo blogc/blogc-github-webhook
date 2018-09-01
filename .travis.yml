@@ -1,16 +1,23 @@
-sudo: required
-services: docker
-language: bash
+language: go
 
-before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+matrix:
+  include:
+    - env:
+        - TARGET=docker
+      language: bash
+      services: docker
+      sudo: required
+      before_install:
+        - sudo apt-get update -qq
+        - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+      script: docker build -t blogc/blogc-github-webhook:latest .
+      after_success:
+        - if [[ "${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH}}" == "master" ]]; then
+          echo "${DOCKER_PASSWORD}" | docker login -u="${DOCKER_USERNAME}" --password-stdin;
+          docker push "blogc/blogc-github-webhook:latest";
+          fi
+    - env:
+        - TARGET=dist-linux-amd64
+      go: "1.11"
 
-script:
-  - docker build -t "blogc/blogc-github-webhook:latest" .
-
-after_success:
-  - if [[ "${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH}}" == "master" ]]; then
-    echo "${DOCKER_PASSWORD}" | docker login -u="${DOCKER_USERNAME}" --password-stdin;
-    docker push "blogc/blogc-github-webhook:latest";
-    fi
+script: curl -sSf https://yatr.rgm.io/run.sh | CGO_ENABLED=0 bash
