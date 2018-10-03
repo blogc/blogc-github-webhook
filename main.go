@@ -29,7 +29,8 @@ func main() {
 		pl, err := parsePayload(r, secret)
 		if err != nil {
 			log.Print(err)
-			io.WriteString(w, "FAIL\n")
+			w.WriteHeader(http.StatusBadRequest)
+			io.WriteString(w, "INVALID JSON\n")
 			return
 		}
 
@@ -37,19 +38,22 @@ func main() {
 
 		if pl.Ref != "refs/heads/master" {
 			log.Printf("main: Invalid ref (%s). Branch is not master", pl.Ref)
-			io.WriteString(w, "OK\n")
+			w.WriteHeader(http.StatusAccepted)
+			io.WriteString(w, "UNSUPPORTED BRANCH\n")
 			return
 		}
 
 		if pl.Deleted {
 			log.Printf("main: Ref was deleted (%s)", pl.Ref)
-			io.WriteString(w, "OK\n")
+			w.WriteHeader(http.StatusAccepted)
+			io.WriteString(w, "BRANCH DELETED\n")
 			return
 		}
 
 		if pl.Repo.Private && !hasApiKey {
 			log.Printf("main: BGW_API_KEY must be set for private repositories")
-			io.WriteString(w, "OK\n")
+			w.WriteHeader(http.StatusPreconditionFailed)
+			io.WriteString(w, "NO API KEY\n")
 			return
 		}
 
@@ -67,7 +71,8 @@ func main() {
 			}
 		}()
 
-		io.WriteString(w, "OK\n")
+		w.WriteHeader(http.StatusAccepted)
+		io.WriteString(w, "ACCEPTED\n")
 	})
 
 	log.Fatal(http.ListenAndServe(listenAddr, nil))
