@@ -16,6 +16,7 @@ type repository struct {
 	CloneURL string `json:"clone_url"`
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
+	Private  bool   `json:"private"`
 }
 
 type payload struct {

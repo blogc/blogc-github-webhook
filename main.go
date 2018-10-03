@@ -10,7 +10,7 @@ import (
 func main() {
 	secret, found := os.LookupEnv("BGW_SECRET")
 	if !found {
-		log.Fatalln("Error: BGW_SECRET must be set")
+		log.Fatalln("main: BGW_SECRET must be set")
 	}
 
 	baseDir, found := os.LookupEnv("BGW_BASEDIR")
@@ -23,7 +23,7 @@ func main() {
 		listenAddr = ":8000"
 	}
 
-	apiKey := os.Getenv("BGW_API_KEY")
+	apiKey, hasApiKey := os.LookupEnv("BGW_API_KEY")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		pl, err := parsePayload(r, secret)
@@ -43,6 +43,12 @@ func main() {
 
 		if pl.Deleted {
 			log.Printf("main: Ref was deleted (%s)", pl.Ref)
+			io.WriteString(w, "OK\n")
+			return
+		}
+
+		if pl.Repo.Private && !hasApiKey {
+			log.Printf("main: BGW_API_KEY must be set for private repositories")
 			io.WriteString(w, "OK\n")
 			return
 		}
