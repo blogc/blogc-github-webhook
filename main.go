@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -16,6 +17,9 @@ func main() {
 	baseDir, found := os.LookupEnv("BGW_BASEDIR")
 	if !found {
 		baseDir = "/var/www/blogc-github-webhook"
+	}
+	if !filepath.IsAbs(baseDir) {
+		log.Fatalln("main: BGW_BASEDIR must be set to absolute path")
 	}
 
 	listenAddr, found := os.LookupEnv("BGW_LISTEN_ADDR")
