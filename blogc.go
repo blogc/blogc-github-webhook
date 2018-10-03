@@ -36,7 +36,7 @@ func blogcRun(tempDir string, baseDir string, p *payload) error {
 		fmt.Sprintf("OUTPUT_DIR=%s", outputDir),
 	)
 	out, err := cmd.CombinedOutput()
-	log.Printf("blogc: Running command: OUTPUT_DIR='%s' blogc-make -f '%s'\n%s", outputDir, blogcfile, string(out))
+	log.Printf("blogc: %s: Running command: OUTPUT_DIR='%s' blogc-make -f '%s'\n%s", p.Repo.FullName, outputDir, blogcfile, string(out))
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func blogcRun(tempDir string, baseDir string, p *payload) error {
 		os.MkdirAll(symDir, 0777)
 	}
 
-	log.Printf("blogc: Creating symlink %s -> %s", sym, outputDirRelative)
+	log.Printf("blogc: %s: Creating symlink %s -> %s", p.Repo.FullName, sym, outputDirRelative)
 	if err := os.Symlink(outputDirRelative, sym); err != nil {
 		return err
 	}

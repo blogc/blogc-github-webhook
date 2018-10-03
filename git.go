@@ -23,7 +23,7 @@ func gitClone(apiKey string, r *repository) (string, error) {
 
 	cmd := exec.Command("git", "clone", "--depth=1", repo, dir)
 	out, err := cmd.CombinedOutput()
-	log.Printf("git: Cloning repository: %s\n%s", r.FullName, string(out))
+	log.Printf("git: %s: Cloning repository\n%s", r.FullName, string(out))
 	if err != nil {
 		os.RemoveAll(dir)
 		return "", err

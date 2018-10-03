@@ -34,24 +34,24 @@ func main() {
 			return
 		}
 
-		log.Printf("main: Processing webhook for %s: %s", pl.Repo.FullName, pl.Ref)
+		log.Printf("main: %s: Processing webhook: %s", pl.Repo.FullName, pl.Ref)
 
 		if pl.Ref != "refs/heads/master" {
-			log.Printf("main: Invalid ref (%s). Branch is not master", pl.Ref)
+			log.Printf("main: %s: Invalid ref (%s). Branch is not master", pl.Repo.FullName, pl.Ref)
 			w.WriteHeader(http.StatusAccepted)
 			io.WriteString(w, "UNSUPPORTED BRANCH\n")
 			return
 		}
 
 		if pl.Deleted {
-			log.Printf("main: Ref was deleted (%s)", pl.Ref)
+			log.Printf("main: %s: Ref was deleted (%s)", pl.Repo.FullName, pl.Ref)
 			w.WriteHeader(http.StatusAccepted)
 			io.WriteString(w, "BRANCH DELETED\n")
 			return
 		}
 
 		if pl.Repo.Private && !hasApiKey {
-			log.Printf("main: BGW_API_KEY must be set for private repositories")
+			log.Printf("main: %s: BGW_API_KEY must be set for private repositories", pl.Repo.FullName)
 			w.WriteHeader(http.StatusPreconditionFailed)
 			io.WriteString(w, "NO API KEY\n")
 			return
