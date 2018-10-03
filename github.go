@@ -12,20 +12,20 @@ import (
 	"strings"
 )
 
-type Repository struct {
+type repository struct {
 	CloneURL string `json:"clone_url"`
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
 }
 
-type Payload struct {
+type payload struct {
 	After   string     `json:"after"`
 	Deleted bool       `json:"deleted"`
 	Ref     string     `json:"ref"`
-	Repo    Repository `json:"repository"`
+	Repo    repository `json:"repository"`
 }
 
-func parsePayload(r *http.Request, secret string) (*Payload, error) {
+func parsePayload(r *http.Request, secret string) (*payload, error) {
 	defer func() {
 		_, _ = io.Copy(ioutil.Discard, r.Body)
 		_ = r.Body.Close()
@@ -43,8 +43,8 @@ func parsePayload(r *http.Request, secret string) (*Payload, error) {
 		return nil, fmt.Errorf("github: Invalid event (%s). Only push event supported", event)
 	}
 
-	payload, err := ioutil.ReadAll(r.Body)
-	if err != nil || len(payload) == 0 {
+	plS, err := ioutil.ReadAll(r.Body)
+	if err != nil || len(plS) == 0 {
 		return nil, fmt.Errorf("github: Failed to parse payload")
 	}
 
@@ -63,17 +63,17 @@ func parsePayload(r *http.Request, secret string) (*Payload, error) {
 	}
 
 	mac := hmac.New(sha1.New, []byte(secret))
-	if _, err := mac.Write(payload); err != nil {
+	if _, err := mac.Write(plS); err != nil {
 		return nil, err
 	}
 	expectedMAC := hex.EncodeToString(mac.Sum(nil))
 
-	if !hmac.Equal([]byte(signature[5:]), []byte(expectedMAC)) {
+	if !hmac.Equal([]byte(sign[1]), []byte(expectedMAC)) {
 		return nil, fmt.Errorf("github: Failed to validate HMAC signature")
 	}
 
-	var pl Payload
-	if err = json.Unmarshal([]byte(payload), &pl); err != nil {
+	var pl payload
+	if err = json.Unmarshal([]byte(plS), &pl); err != nil {
 		return nil, err
 	}
 

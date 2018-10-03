@@ -8,7 +8,7 @@ import (
 	"os/exec"
 )
 
-func gitClone(apiKey string, r *Repository) (string, error) {
+func gitClone(apiKey string, r *repository) (string, error) {
 	dir, err := ioutil.TempDir("", "bgw_")
 	if err != nil {
 		return "", err

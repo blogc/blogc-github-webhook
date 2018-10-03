@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func blogcRun(tempDir string, baseDir string, p *Payload) error {
+func blogcRun(tempDir string, baseDir string, p *payload) error {
 	blogcfile := filepath.Join(tempDir, "blogcfile")
 	if _, err := os.Stat(blogcfile); os.IsNotExist(err) {
 		return fmt.Errorf("blogc: blogcfile not found")
