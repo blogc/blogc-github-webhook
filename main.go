@@ -38,7 +38,7 @@ func main() {
 			return
 		}
 		if pl == nil {
-			log.Println("main: %s: Ping")
+			log.Printf("main: %s: Ping", pl.Repo.FullName)
 			w.WriteHeader(http.StatusOK)
 			io.WriteString(w, "PONG\n")
 			return
