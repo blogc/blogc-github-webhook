@@ -21,7 +21,7 @@ func gitClone(apiKey string, r *repository) (string, error) {
 		repo = fmt.Sprintf("https://github.com/%s.git", r.FullName)
 	}
 
-	cmd := exec.Command("git", "clone", "--depth=1", repo, dir)
+	cmd := exec.Command("git", "clone", "--branch", "master", "--depth=1", repo, dir)
 	out, err := cmd.CombinedOutput()
 	log.Printf("git: %s: Cloning repository\n%s", r.FullName, string(out))
 	if err != nil {
