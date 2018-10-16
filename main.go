@@ -37,8 +37,9 @@ func main() {
 			io.WriteString(w, "INVALID JSON\n")
 			return
 		}
-		if pl == nil {
-			log.Printf("main: %s: Ping", pl.Repo.FullName)
+
+		if pl.Zen != "" {
+			log.Printf("main: %s: ping: %s", pl.Repo.FullName, pl.Zen)
 			w.WriteHeader(http.StatusOK)
 			io.WriteString(w, "PONG\n")
 			return
