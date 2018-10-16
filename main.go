@@ -37,6 +37,12 @@ func main() {
 			io.WriteString(w, "INVALID JSON\n")
 			return
 		}
+		if pl == nil {
+			log.Println("main: %s: Ping")
+			w.WriteHeader(http.StatusOK)
+			io.WriteString(w, "PONG\n")
+			return
+		}
 
 		log.Printf("main: %s: Processing webhook: %s", pl.Repo.FullName, pl.Ref)
 

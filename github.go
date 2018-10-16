@@ -40,8 +40,11 @@ func parsePayload(r *http.Request, secret string) (*payload, error) {
 	if event == "" {
 		return nil, fmt.Errorf("github: Missing GitHub event")
 	}
+	if event == "ping" {
+		return nil, nil
+	}
 	if event != "push" {
-		return nil, fmt.Errorf("github: Invalid event (%s). Only push event supported", event)
+		return nil, fmt.Errorf("github: Invalid event (%s). Only push and ping events supported", event)
 	}
 
 	plS, err := ioutil.ReadAll(r.Body)
