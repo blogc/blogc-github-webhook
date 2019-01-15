@@ -1,7 +1,7 @@
 FROM golang:1.11-stretch
 LABEL maintainer "Rafael Martins <rafael@rafaelmartins.eng.br>"
 
-ENV BLOGC_VERSION 0.14.0
+ENV BLOGC_VERSION 0.14.1
 
 COPY . /code
 
