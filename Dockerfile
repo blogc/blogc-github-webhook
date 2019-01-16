@@ -1,7 +1,9 @@
 FROM golang:1.11-stretch
 LABEL maintainer "Rafael Martins <rafael@rafaelmartins.eng.br>"
 
-ENV BLOGC_VERSION 0.14.1
+ARG BLOGC_VERSION 0.14.1
+
+ENV BGW_BASEDIR /data
 
 COPY . /code
 
@@ -33,9 +35,8 @@ RUN set -x \
     ) \
     && rm -rf /code
 
-ENV BGW_BASEDIR /data
+VOLUME /data
 
-VOLUME ["/data"]
 EXPOSE 8000
 
 CMD ["/usr/bin/blogc-github-webhook"]

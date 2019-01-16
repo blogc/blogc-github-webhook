@@ -1,3 +1,4 @@
+dist: xenial
 language: go
 
 matrix:
@@ -6,10 +7,6 @@ matrix:
         - TARGET=docker
       language: bash
       services: docker
-      sudo: required
-      before_install:
-        - sudo apt-get update -qq
-        - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
       script: docker build -t blogc/blogc-github-webhook:latest .
       after_success:
         - if [[ "${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH}}" == "master" ]]; then
