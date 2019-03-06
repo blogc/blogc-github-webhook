@@ -1,7 +1,7 @@
-FROM golang:1.11-stretch
+FROM golang:1.12-stretch
 LABEL maintainer "Rafael Martins <rafael@rafaelmartins.eng.br>"
 
-ARG BLOGC_VERSION=0.14.1
+ARG BLOGC_VERSION=0.15.1
 
 ENV BGW_BASEDIR /data
 

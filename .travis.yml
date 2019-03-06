@@ -15,6 +15,6 @@ matrix:
           fi
     - env:
         - TARGET=dist-linux-amd64
-      go: "1.11"
+      go: "1.12"
 
 script: curl -sSf https://yatr.rgm.io/run.sh | CGO_ENABLED=0 bash
