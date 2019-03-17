@@ -137,8 +137,6 @@ func downloadCommit(apiKey string, pl *payload) (string, error) {
 			fn = filepath.Join(dir, hdr.Name[dirIndex:])
 		}
 
-		log.Printf("%s %s", fn, hdr.Name)
-
 		if hdr.FileInfo().IsDir() {
 			if err := os.MkdirAll(fn, os.FileMode(hdr.Mode)); err != nil {
 				return "", err
