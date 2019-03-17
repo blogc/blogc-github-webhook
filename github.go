@@ -88,7 +88,7 @@ func parsePayload(r *http.Request, secret string) (*payload, error) {
 }
 
 func downloadCommit(apiKey string, pl *payload) (string, error) {
-	log.Printf("git: %s: Downloading commit: %s", pl.Repo.FullName, pl.After)
+	log.Printf("github: %s: Downloading commit: %s", pl.Repo.FullName, pl.After)
 
 	dir, err := ioutil.TempDir("", "bgw_")
 	if err != nil {
