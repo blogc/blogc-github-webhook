@@ -1,6 +1,8 @@
 package main
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
@@ -8,7 +10,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -20,11 +25,11 @@ type repository struct {
 }
 
 type payload struct {
-	Zen     string     `json:"zen"`
-	After   string     `json:"after"`
-	Deleted bool       `json:"deleted"`
-	Ref     string     `json:"ref"`
-	Repo    repository `json:"repository"`
+	Zen     string      `json:"zen"`
+	After   string      `json:"after"`
+	Deleted bool        `json:"deleted"`
+	Ref     string      `json:"ref"`
+	Repo    *repository `json:"repository"`
 }
 
 func parsePayload(r *http.Request, secret string) (*payload, error) {
@@ -80,4 +85,92 @@ func parsePayload(r *http.Request, secret string) (*payload, error) {
 	}
 
 	return &pl, nil
+}
+
+func downloadCommit(apiKey string, pl *payload) (string, error) {
+	log.Printf("git: %s: Downloading commit: %s", pl.Repo.FullName, pl.After)
+
+	dir, err := ioutil.TempDir("", "bgw_")
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("https://api.github.com/repos/%s/tarball/%s", pl.Repo.FullName, pl.After)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	if apiKey != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", apiKey))
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	gr, err := gzip.NewReader(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	reader := tar.NewReader(gr)
+	for {
+		hdr, err := reader.Next()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return "", err
+		}
+
+		dirIndex := strings.Index(filepath.ToSlash(hdr.Name), "/")
+		if dirIndex == -1 && !hdr.FileInfo().IsDir() {
+			continue
+		}
+
+		fn := dir
+		if dirIndex > 0 {
+			fn = filepath.Join(dir, hdr.Name[dirIndex:])
+		}
+
+		log.Printf("%s %s", fn, hdr.Name)
+
+		if hdr.FileInfo().IsDir() {
+			if err := os.MkdirAll(fn, os.FileMode(hdr.Mode)); err != nil {
+				return "", err
+			}
+			continue
+		}
+
+		if hdr.Linkname != "" {
+			if err := os.Symlink(hdr.Linkname, fn); err != nil {
+				return "", err
+			}
+			continue
+		}
+
+		f, err := os.Create(fn)
+		if err != nil {
+			return "", err
+		}
+
+		if _, err := io.Copy(f, reader); err != nil {
+			f.Close()
+			return "", err
+		}
+
+		if err := f.Close(); err != nil {
+			return "", err
+		}
+
+		if err := os.Chmod(fn, os.FileMode(hdr.Mode)); err != nil {
+			return "", err
+		}
+	}
+
+	return dir, nil
 }

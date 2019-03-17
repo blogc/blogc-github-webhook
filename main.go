@@ -69,7 +69,7 @@ func main() {
 		}
 
 		go func() {
-			tempDir, err := gitClone(apiKey, &pl.Repo)
+			tempDir, err := downloadCommit(apiKey, pl)
 			if err != nil {
 				log.Print(err)
 				return

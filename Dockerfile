@@ -12,7 +12,6 @@ RUN set -x \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         wget \
-        git \
         tar \
         xz-utils \
         locales-all \
