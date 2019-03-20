@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func main() {
@@ -27,6 +28,15 @@ func main() {
 		listenAddr = ":8000"
 	}
 
+	allowedBranches := []string{"master"}
+	additionalBranches, found := os.LookupEnv("BGW_BRANCHES")
+	if found {
+		allowedBranches = []string{}
+		for _, v := range strings.Split(additionalBranches, ",") {
+			allowedBranches = append(allowedBranches, strings.TrimSpace(v))
+		}
+	}
+
 	apiKey, hasApiKey := os.LookupEnv("BGW_API_KEY")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -45,19 +55,30 @@ func main() {
 			return
 		}
 
-		log.Printf("main: %s: Processing webhook: %s", pl.Repo.FullName, pl.Ref)
+		branch := pl.getBranch()
 
-		if pl.Ref != "refs/heads/master" {
-			log.Printf("main: %s: Invalid ref (%s). Branch is not master", pl.Repo.FullName, pl.Ref)
+		log.Printf("main: %s: Processing webhook: %s (%s)", pl.Repo.FullName, pl.Ref, branch)
+
+		found := false
+		for _, v := range allowedBranches {
+			if v == branch {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			log.Printf("main: %s: Invalid ref (%s). Branch is not allowed: %s", pl.Repo.FullName, pl.Ref, branch)
 			w.WriteHeader(http.StatusAccepted)
 			io.WriteString(w, "UNSUPPORTED BRANCH\n")
 			return
 		}
 
 		if pl.Deleted {
-			log.Printf("main: %s: Ref was deleted (%s)", pl.Repo.FullName, pl.Ref)
+			log.Printf("main: %s: Ref was deleted (%s). Branch will be cleaned up: %s", pl.Repo.FullName, pl.Ref, branch)
 			w.WriteHeader(http.StatusAccepted)
 			io.WriteString(w, "BRANCH DELETED\n")
+			go blogcCleanup(baseDir, pl)
 			return
 		}
 
@@ -69,7 +90,7 @@ func main() {
 		}
 
 		go func() {
-			tempDir, err := downloadCommit(apiKey, pl)
+			tempDir, err := pl.download(apiKey)
 			if err != nil {
 				log.Print(err)
 				return

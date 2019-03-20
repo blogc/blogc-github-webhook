@@ -22,6 +22,9 @@ type repository struct {
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
 	Private  bool   `json:"private"`
+	Owner    *struct {
+		Login string `json:"login"`
+	} `json:"owner"`
 }
 
 type payload struct {
@@ -87,7 +90,7 @@ func parsePayload(r *http.Request, secret string) (*payload, error) {
 	return &pl, nil
 }
 
-func downloadCommit(apiKey string, pl *payload) (string, error) {
+func (pl *payload) download(apiKey string) (string, error) {
 	log.Printf("github: %s: Downloading commit: %s", pl.Repo.FullName, pl.After)
 
 	dir, err := ioutil.TempDir("", "bgw_")
@@ -171,4 +174,12 @@ func downloadCommit(apiKey string, pl *payload) (string, error) {
 	}
 
 	return dir, nil
+}
+
+func (pl *payload) getBranch() string {
+	if !strings.HasPrefix(pl.Ref, "refs/heads/") {
+		return ""
+	}
+
+	return strings.TrimPrefix(pl.Ref, "refs/heads/")
 }
