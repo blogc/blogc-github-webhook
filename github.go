@@ -17,14 +17,14 @@ import (
 	"strings"
 )
 
+type owner struct {
+	Login string `json:"login"`
+}
+
 type repository struct {
-	CloneURL string `json:"clone_url"`
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
-	Private  bool   `json:"private"`
-	Owner    *struct {
-		Login string `json:"login"`
-	} `json:"owner"`
+	Owner    *owner `json:"owner"`
 }
 
 type payload struct {
@@ -33,6 +33,53 @@ type payload struct {
 	Deleted bool        `json:"deleted"`
 	Ref     string      `json:"ref"`
 	Repo    *repository `json:"repository"`
+}
+
+type ref struct {
+	Object *struct {
+		Type string `json:"type"`
+		Sha  string `json:"sha"`
+	} `json:"object"`
+}
+
+func request(url string, apiKey string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Authorization", fmt.Sprintf("token %s", apiKey))
+
+	return http.DefaultClient.Do(req)
+}
+
+func getRef(fullName string, branch string, apiKey string) (string, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/git/refs/heads/%s", fullName, branch)
+	resp, err := request(url, apiKey)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var r ref
+	if err = json.Unmarshal(content, &r); err != nil {
+		return "", err
+	}
+
+	if r.Object == nil {
+		return "", fmt.Errorf("github: invalid repo (%s) or branch (%s)", fullName, branch)
+	}
+
+	if r.Object.Type != "commit" {
+		return "", fmt.Errorf("github: invalid reference type: %s", r.Object.Type)
+	}
+
+	return r.Object.Sha, nil
 }
 
 func parsePayload(r *http.Request, secret string) (*payload, error) {
@@ -99,16 +146,7 @@ func (pl *payload) download(apiKey string) (string, error) {
 	}
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/tarball/%s", pl.Repo.FullName, pl.After)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return "", err
-	}
-
-	if apiKey != "" {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", apiKey))
-	}
-
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := request(url, apiKey)
 	if err != nil {
 		return "", err
 	}

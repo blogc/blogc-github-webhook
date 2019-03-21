@@ -19,7 +19,7 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("%d: %s", e.statusCode, e.message)
 }
 
-func build(pl *payload, allowedBranches []string, baseDir string, hasApiKey bool, apiKey string, async bool) *HTTPError {
+func build(pl *payload, allowedBranches []string, baseDir string, apiKey string, async bool) *HTTPError {
 	branch := pl.getBranch()
 
 	log.Printf("main: %s: Processing webhook: %s (%s)", pl.Repo.FullName, pl.Ref, branch)
@@ -53,14 +53,6 @@ func build(pl *payload, allowedBranches []string, baseDir string, hasApiKey bool
 		}
 	}
 
-	if pl.Repo.Private && !hasApiKey {
-		log.Printf("main: %s: BGW_API_KEY must be set for private repositories", pl.Repo.FullName)
-		return &HTTPError{
-			statusCode: http.StatusPreconditionFailed,
-			message:    "no api key",
-		}
-	}
-
 	fn := func() {
 		tempDir, err := pl.download(apiKey)
 		if err != nil {
@@ -90,6 +82,11 @@ func main() {
 		log.Fatalln("main: BGW_SECRET must be set")
 	}
 
+	apiKey, found := os.LookupEnv("BGW_API_KEY")
+	if !found {
+		log.Fatalln("main: BGW_API_KEY must be set")
+	}
+
 	baseDir, found := os.LookupEnv("BGW_BASEDIR")
 	if !found {
 		baseDir = "/var/www/blogc-github-webhook"
@@ -112,7 +109,39 @@ func main() {
 		}
 	}
 
-	apiKey, hasApiKey := os.LookupEnv("BGW_API_KEY")
+	if len(os.Args) > 2 {
+		fullName := os.Args[1]
+		branch := os.Args[2]
+
+		pieces := strings.Split(fullName, "/")
+		if len(pieces) != 2 {
+			log.Fatalln("main: invalid full name: %s", fullName)
+		}
+
+		sha, err := getRef(fullName, branch, apiKey)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		pl := &payload{
+			After:   sha,
+			Deleted: false,
+			Ref:     fmt.Sprintf("refs/heads/%s", branch),
+			Repo: &repository{
+				Name:     pieces[1],
+				FullName: fullName,
+				Owner: &owner{
+					Login: pieces[0],
+				},
+			},
+		}
+
+		if err := build(pl, allowedBranches, baseDir, apiKey, false); err != nil {
+			log.Fatalln(err)
+		}
+
+		return
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		pl, err := parsePayload(r, secret)
@@ -130,7 +159,7 @@ func main() {
 			return
 		}
 
-		if err := build(pl, allowedBranches, baseDir, hasApiKey, apiKey, true); err != nil {
+		if err := build(pl, allowedBranches, baseDir, apiKey, true); err != nil {
 			w.WriteHeader(err.statusCode)
 			io.WriteString(w, fmt.Sprintf("%s\n", strings.ToUpper(err.message)))
 			return
