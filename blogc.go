@@ -20,8 +20,14 @@ func blogcCleanup(basedir string, p *payload) string {
 
 func blogcRun(tempDir string, baseDir string, p *payload) error {
 	blogcfile := filepath.Join(tempDir, "blogcfile")
+	blogcZeroconf := ""
 	if _, err := os.Stat(blogcfile); os.IsNotExist(err) {
-		return fmt.Errorf("blogc: blogcfile not found")
+		bz, err := exec.LookPath("blogc-zeroconf")
+		if err != nil {
+			return fmt.Errorf("blogc: %s: blogcfile not found and blogc-zeroconf not installed", p.Repo.FullName)
+		}
+		log.Printf("blogc: %s: blogcfile not found, will try to use blogc-zeroconf", p.Repo.FullName)
+		blogcZeroconf = bz
 	}
 
 	buildId := fmt.Sprintf("%s-%d", p.After, time.Now().Unix())
@@ -33,13 +39,22 @@ func blogcRun(tempDir string, baseDir string, p *payload) error {
 		outputDirRelative += "-"
 	}
 
-	cmd := exec.Command("blogc-make", "-f", blogcfile)
+	var cmd *exec.Cmd
+	cmdStr := ""
+	if blogcZeroconf != "" {
+		cmd = exec.Command(blogcZeroconf)
+		cmdStr = fmt.Sprintf("OUTPUT_DIR=%q %s", outputDir, blogcZeroconf)
+	} else {
+		cmd = exec.Command("blogc-make", "-f", blogcfile)
+		cmdStr = fmt.Sprintf("OUTPUT_DIR=%q blogc-make -f %q", outputDir, blogcfile)
+	}
+	cmd.Dir = tempDir
 	cmd.Env = append(
 		os.Environ(),
 		fmt.Sprintf("OUTPUT_DIR=%s", outputDir),
 	)
 	out, err := cmd.CombinedOutput()
-	log.Printf("blogc: %s: Running command: OUTPUT_DIR='%s' blogc-make -f '%s'\n%s", p.Repo.FullName, outputDir, blogcfile, string(out))
+	log.Printf("blogc: %s: Running command: %s\n%s", p.Repo.FullName, cmdStr, string(out))
 	if err != nil {
 		return err
 	}
