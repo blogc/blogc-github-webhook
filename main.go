@@ -43,9 +43,9 @@ func build(pl *payload, allowedBranches []string, baseDir string, apiKey string,
 	if pl.Deleted {
 		log.Printf("main: %s: Ref was deleted (%s). Branch will be cleaned up: %s", pl.Repo.FullName, pl.Ref, branch)
 		if async {
-			go blogcCleanup(baseDir, pl)
+			go builderCleanup(baseDir, pl)
 		} else {
-			blogcCleanup(baseDir, pl)
+			builderCleanup(baseDir, pl)
 		}
 		return &HTTPError{
 			statusCode: http.StatusAccepted,
@@ -61,7 +61,7 @@ func build(pl *payload, allowedBranches []string, baseDir string, apiKey string,
 		}
 		defer os.RemoveAll(tempDir)
 
-		if err := blogcRun(tempDir, baseDir, pl); err != nil {
+		if err := builderRun(tempDir, baseDir, pl); err != nil {
 			log.Print(err)
 			return
 		}
