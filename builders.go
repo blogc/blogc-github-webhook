@@ -53,19 +53,21 @@ func (b *builderMake) getBinary() string {
 }
 
 func (b *builderMake) getCommand(inputDir string, outputDir string) string {
-	return fmt.Sprintf("OUTPUT_DIR=%q %s -f %q", outputDir, b.getBinary(), b.makefile)
+	return fmt.Sprintf("OUTPUT_DIR=%q %s -f %q blogc-github-webhook", outputDir, b.getBinary(), b.makefile)
 }
 
 func (b *builderMake) lookup(inputDir string) bool {
 	b.makefile = filepath.Join(inputDir, "Makefile")
-	bgwMake := filepath.Join(inputDir, ".bgw_make")
-	_, err1 := os.Stat(b.makefile)
-	_, err2 := os.Stat(bgwMake)
-	return err1 == nil && err2 == nil
+	if _, err := os.Stat(b.makefile); err != nil {
+		return false
+	}
+	cmd := exec.Command(b.getBinary(), "--dry-run", "--file", b.makefile, "blogc-github-webhook")
+	cmd.Dir = inputDir
+	return cmd.Run() == nil
 }
 
 func (b *builderMake) build(inputDir string, outputDir string) ([]byte, error) {
-	cmd := exec.Command(b.getBinary(), "-f", b.makefile)
+	cmd := exec.Command(b.getBinary(), "-f", b.makefile, "blogc-github-webhook")
 	cmd.Dir = inputDir
 	cmd.Env = append(
 		os.Environ(),
