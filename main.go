@@ -115,7 +115,7 @@ func main() {
 
 		pieces := strings.Split(fullName, "/")
 		if len(pieces) != 2 {
-			log.Fatalln("main: invalid full name: %s", fullName)
+			log.Fatalln("main: invalid full name:", fullName)
 		}
 
 		sha, err := getRef(fullName, branch, apiKey)

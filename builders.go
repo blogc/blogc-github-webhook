@@ -9,6 +9,30 @@ import (
 	"time"
 )
 
+func command(name string, arg ...string) *exec.Cmd {
+	cmd := func() *exec.Cmd {
+		if p, err := exec.LookPath("telegram-notify"); err == nil {
+			_, f1 := os.LookupEnv("TELEGRAM_NOTIFY_TOKEN")
+			_, f2 := os.LookupEnv("TELEGRAM_NOFITY_CHAT_ID")
+			if f1 && f2 {
+				// todo: make the telegram-notify arguments configurable
+				args := []string{
+					"-id=blogc-github-webhook",
+					"-success",
+					"--",
+					name,
+				}
+				return exec.Command(p, append(args, arg...)...)
+			}
+		}
+		return exec.Command(name, arg...)
+	}()
+
+	// make sure that we are inheriting the default environment
+	cmd.Env = os.Environ()
+	return cmd
+}
+
 type builder interface {
 	getBinary() string
 	getCommand(inputDir string, outputDir string) string
@@ -25,7 +49,7 @@ func (b *builderBlogcMake) getBinary() string {
 }
 
 func (b *builderBlogcMake) getCommand(inputDir string, outputDir string) string {
-	return fmt.Sprintf("OUTPUT_DIR=%q %s -f %q", outputDir, b.getBinary(), b.blogcfile)
+	return fmt.Sprintf("OUTPUT_DIR=%q %s --file %q", outputDir, b.getBinary(), b.blogcfile)
 }
 
 func (b *builderBlogcMake) lookup(inputDir string) bool {
@@ -35,10 +59,10 @@ func (b *builderBlogcMake) lookup(inputDir string) bool {
 }
 
 func (b *builderBlogcMake) build(inputDir string, outputDir string) ([]byte, error) {
-	cmd := exec.Command(b.getBinary(), "-f", b.blogcfile)
+	cmd := command(b.getBinary(), "--file", b.blogcfile)
 	cmd.Dir = inputDir
 	cmd.Env = append(
-		os.Environ(),
+		cmd.Env,
 		fmt.Sprintf("OUTPUT_DIR=%s", outputDir),
 	)
 	return cmd.CombinedOutput()
@@ -67,10 +91,10 @@ func (b *builderMake) lookup(inputDir string) bool {
 }
 
 func (b *builderMake) build(inputDir string, outputDir string) ([]byte, error) {
-	cmd := exec.Command(b.getBinary(), "-f", b.makefile, "blogc-github-webhook")
+	cmd := command(b.getBinary(), "-f", b.makefile, "blogc-github-webhook")
 	cmd.Dir = inputDir
 	cmd.Env = append(
-		os.Environ(),
+		cmd.Env,
 		fmt.Sprintf("OUTPUT_DIR=%s", outputDir),
 	)
 	return cmd.CombinedOutput()
@@ -92,10 +116,10 @@ func (b *builderBlogcZeroconf) lookup(inputDir string) bool {
 }
 
 func (b *builderBlogcZeroconf) build(inputDir string, outputDir string) ([]byte, error) {
-	cmd := exec.Command(b.getBinary())
+	cmd := command(b.getBinary())
 	cmd.Dir = inputDir
 	cmd.Env = append(
-		os.Environ(),
+		cmd.Env,
 		fmt.Sprintf("OUTPUT_DIR=%s", outputDir),
 	)
 	return cmd.CombinedOutput()
