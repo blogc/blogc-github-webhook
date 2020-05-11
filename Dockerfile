@@ -1,7 +1,5 @@
-FROM golang:1.12-stretch
+FROM golang:1.14-buster
 LABEL maintainer "Rafael Martins <rafael@rafaelmartins.eng.br>"
-
-ARG BLOGC_VERSION=0.15.1
 
 ENV BGW_BASEDIR /data
 
@@ -16,13 +14,14 @@ RUN set -x \
         xz-utils \
         locales-all \
     && rm -rf /var/lib/apt/lists/* \
+    && BLOGC_VERSION=$(wget -q -O- https://blogc.rgm.io/ | grep '^LATEST_RELEASE=' | cut -d= -f2) \
     && wget https://github.com/blogc/blogc/releases/download/v$BLOGC_VERSION/blogc-$BLOGC_VERSION.tar.xz \
     && tar -xvf blogc-$BLOGC_VERSION.tar.xz \
     && rm blogc-$BLOGC_VERSION.tar.xz \
     && ( \
         cd blogc-$BLOGC_VERSION \
         && ./configure \
-            --prefix /usr \
+            --prefix /usr/local \
             --enable-make \
         && make \
         && make install \
@@ -30,7 +29,7 @@ RUN set -x \
     && rm -rf blogc-$BLOGC_VERSION \
     && ( \
         cd /code \
-        && go build -o /usr/bin/blogc-github-webhook \
+        && CGO_ENABLED=0 go build -o /usr/local/bin/blogc-github-webhook \
     ) \
     && rm -rf /code
 
@@ -38,4 +37,4 @@ VOLUME /data
 
 EXPOSE 8000
 
-CMD ["/usr/bin/blogc-github-webhook"]
+CMD ["/usr/local/bin/blogc-github-webhook"]

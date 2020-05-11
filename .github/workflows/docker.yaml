@@ -1,0 +1,26 @@
+name: docker
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: "0 20 * * *"
+
+jobs:
+  docker:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --file Dockerfile --tag blogc-github-webhook
+
+      - name: Log into registry
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Push image
+        run: |
+          docker tag blogc-github-webhook rafaelmartins/blogc-github-webhook:latest
+          docker push rafaelmartins/blogc-github-webhook:latest
