@@ -13,7 +13,7 @@ func command(name string, arg ...string) *exec.Cmd {
 	cmd := func() *exec.Cmd {
 		if p, err := exec.LookPath("telegram-notify"); err == nil {
 			_, f1 := os.LookupEnv("TELEGRAM_NOTIFY_TOKEN")
-			_, f2 := os.LookupEnv("TELEGRAM_NOFITY_CHAT_ID")
+			_, f2 := os.LookupEnv("TELEGRAM_NOTIFY_CHAT_ID")
 			if f1 && f2 {
 				// todo: make the telegram-notify arguments configurable
 				args := []string{
