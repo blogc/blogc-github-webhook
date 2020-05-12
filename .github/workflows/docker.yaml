@@ -22,5 +22,5 @@ jobs:
 
       - name: Push image
         run: |
-          docker tag blogc-github-webhook rafaelmartins/blogc-github-webhook:latest
-          docker push rafaelmartins/blogc-github-webhook:latest
+          docker tag blogc-github-webhook blogc/blogc-github-webhook:latest
+          docker push blogc/blogc-github-webhook:latest
