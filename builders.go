@@ -49,7 +49,7 @@ func (b *builderBlogcMake) getBinary() string {
 }
 
 func (b *builderBlogcMake) getCommand(inputDir string, outputDir string) string {
-	return fmt.Sprintf("OUTPUT_DIR=%q %s --file %q", outputDir, b.getBinary(), b.blogcfile)
+	return fmt.Sprintf("OUTPUT_DIR=%q %s -f %q", outputDir, b.getBinary(), b.blogcfile)
 }
 
 func (b *builderBlogcMake) lookup(inputDir string) bool {
@@ -59,7 +59,7 @@ func (b *builderBlogcMake) lookup(inputDir string) bool {
 }
 
 func (b *builderBlogcMake) build(inputDir string, outputDir string) ([]byte, error) {
-	cmd := command(b.getBinary(), "--file", b.blogcfile)
+	cmd := command(b.getBinary(), "-f", b.blogcfile)
 	cmd.Dir = inputDir
 	cmd.Env = append(
 		cmd.Env,
@@ -77,7 +77,7 @@ func (b *builderMake) getBinary() string {
 }
 
 func (b *builderMake) getCommand(inputDir string, outputDir string) string {
-	return fmt.Sprintf("OUTPUT_DIR=%q %s -f %q blogc-github-webhook", outputDir, b.getBinary(), b.makefile)
+	return fmt.Sprintf("OUTPUT_DIR=%q %s --file %q blogc-github-webhook", outputDir, b.getBinary(), b.makefile)
 }
 
 func (b *builderMake) lookup(inputDir string) bool {
@@ -91,7 +91,7 @@ func (b *builderMake) lookup(inputDir string) bool {
 }
 
 func (b *builderMake) build(inputDir string, outputDir string) ([]byte, error) {
-	cmd := command(b.getBinary(), "-f", b.makefile, "blogc-github-webhook")
+	cmd := command(b.getBinary(), "--file", b.makefile, "blogc-github-webhook")
 	cmd.Dir = inputDir
 	cmd.Env = append(
 		cmd.Env,
